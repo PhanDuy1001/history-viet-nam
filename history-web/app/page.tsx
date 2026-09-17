@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -27,9 +28,12 @@ export default function Home() {
             </a>
           </nav>
 
-          <button className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10">
-            Đăng nhập
-          </button>
+          <Link
+  href="/login"
+  className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+>
+  Đăng nhập
+</Link>
         </div>
       </header>
 
@@ -56,9 +60,12 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex gap-4">
-              <button className="rounded-xl bg-amber-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-300">
-                Bắt đầu học →
-              </button>
+              <Link
+                href="/lesson"
+                className="rounded-xl bg-amber-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-300"
+>
+  Bắt đầu bài học →
+</Link>
 
               <button className="rounded-xl border border-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
                 Khám phá bài học
@@ -156,9 +163,14 @@ export default function Home() {
                 Kiểm tra kiến thức bằng những câu hỏi nhanh và thú vị.
               </p>
 
-              <button className="mt-5 text-sm font-semibold text-amber-400">
-                Làm quiz →
-              </button>
+            <Link
+               href="/quiz"
+               className="mt-5 inline-block text-sm font-semibold text-amber-400 hover:text-amber-300"
+            >
+              Làm quiz →
+            </Link>
+
+
             </div>
 
             <div className="group rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-amber-400/30">
@@ -172,9 +184,12 @@ export default function Home() {
                 Theo dõi tiến độ và chinh phục các cột mốc học tập.
               </p>
 
-              <button className="mt-5 text-sm font-semibold text-amber-400">
-                Xem thành tích →
-              </button>
+            <Link
+              href="/achievements"
+              className="mt-5 inline-block text-sm font-semibold text-amber-400 hover:text-amber-300"
+            >
+              Xem thành tích →
+            </Link>
             </div>
           </div>
         </div>
