@@ -316,7 +316,6 @@ function SceneVisual({
 
   return (
     <div className="absolute inset-0">
-      {/* Ảnh nền */}
       <div className="absolute inset-6 overflow-hidden rounded-[1.5rem]">
         <img
           src={sceneImages[sceneId]}
@@ -324,23 +323,19 @@ function SceneVisual({
           className="h-full w-full object-cover"
         />
 
-        {/* Lớp phủ tối */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       </div>
 
-      {/* Số cảnh */}
       <div className="absolute right-8 top-8 z-10 text-xs font-bold tracking-[0.25em] text-white/50">
         {String(sceneId).padStart(2, "0")}
       </div>
 
-      {/* Tên địa điểm */}
       <div className="absolute bottom-24 left-1/2 z-10 w-full -translate-x-1/2 px-10 text-center">
         <div className="text-xs font-bold tracking-[0.35em] text-white/60">
           {labels[type] ?? "LỊCH SỬ"}
         </div>
       </div>
 
-      {/* Viền */}
       <div className="absolute inset-6 rounded-[1.5rem] border border-white/10" />
 
       <div className="absolute left-0 right-0 top-0 h-5 bg-black/40" />
@@ -357,7 +352,27 @@ export default function LessonPage() {
 
   const scene = scenes[sceneIndex];
 
-  const nextScene = () => {
+  // LƯU TIẾN ĐỘ VÀO MONGODB
+  async function saveProgress(sceneId: number) {
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sceneId,
+        }),
+      });
+    } catch (error) {
+      console.error("Không thể lưu tiến độ:", error);
+    }
+  }
+
+  const nextScene = async () => {
+    // Lưu cảnh hiện tại trước khi chuyển sang cảnh tiếp theo
+    await saveProgress(scene.id);
+
     if (sceneIndex < scenes.length - 1) {
       setSceneIndex((current) => current + 1);
       setShowInfo(false);
@@ -387,7 +402,6 @@ export default function LessonPage() {
       {/* HEADER */}
       <header className="relative z-20 flex items-center justify-between border-b border-white/10 bg-black/20 px-5 py-4 backdrop-blur-md md:px-10">
         <div className="flex items-center gap-3">
-          {/* NÚT VỀ MENU */}
           <button
             onClick={() => {
               window.location.href = "/";

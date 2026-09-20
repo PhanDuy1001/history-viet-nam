@@ -27,7 +27,12 @@ const questions: Question[] = [
   },
   {
     question: "Phát xít Nhật tuyên bố đầu hàng Đồng minh vào thời điểm nào?",
-    options: ["Tháng 3/1945", "Tháng 5/1945", "Tháng 8/1945", "Tháng 9/1945"],
+    options: [
+      "Tháng 3/1945",
+      "Tháng 5/1945",
+      "Tháng 8/1945",
+      "Tháng 9/1945",
+    ],
     answer: 2,
   },
   {
@@ -90,42 +95,78 @@ const questions: Question[] = [
 export default function QuizPage() {
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
 
   const question = questions[current];
 
   function chooseAnswer(index: number) {
     if (selected !== null) return;
+
     setSelected(index);
   }
 
-  function nextQuestion() {
+  async function nextQuestion() {
     if (selected === null) return;
 
-    if (selected === question.answer) {
-      setScore((prev) => prev + 1);
+    const updatedAnswers = [...answers];
+    updatedAnswers[current] = selected;
+
+    setAnswers(updatedAnswers);
+
+    // Nếu chưa phải câu cuối
+    if (current < questions.length - 1) {
+      setCurrent(current + 1);
+      setSelected(null);
+      return;
     }
 
-    if (current === questions.length - 1) {
-      setFinished(true);
-    } else {
-      setCurrent((prev) => prev + 1);
-      setSelected(null);
+    // ===== TÍNH ĐIỂM =====
+    let score = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+      if (updatedAnswers[i] === questions[i].answer) {
+        score++;
+      }
     }
+
+    setFinalScore(score);
+    setSaving(true);
+
+    try {
+      const response = await fetch("/api/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quizScore: score,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Không thể lưu điểm Quiz.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lưu điểm Quiz:", error);
+    }
+
+    setSaving(false);
+    setFinished(true);
   }
 
   function restartQuiz() {
     setCurrent(0);
     setSelected(null);
-    setScore(0);
+    setAnswers([]);
     setFinished(false);
+    setSaving(false);
+    setFinalScore(0);
   }
 
   if (finished) {
-    const finalScore =
-      score + (selected === question.answer ? 1 : 0);
-
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-6">
         <div className="w-full max-w-2xl text-center">
@@ -140,7 +181,9 @@ export default function QuizPage() {
           </p>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 mb-8">
-            <p className="text-slate-400 mb-2">Điểm của bạn</p>
+            <p className="text-slate-400 mb-2">
+              Điểm của bạn
+            </p>
 
             <p className="text-6xl font-bold">
               {finalScore}/10
@@ -166,6 +209,13 @@ export default function QuizPage() {
             </button>
 
             <Link
+              href="/achievements"
+              className="rounded-xl bg-amber-400 px-6 py-3 font-bold text-slate-950 hover:bg-amber-300 transition"
+            >
+              🏆 Xem thành tích
+            </Link>
+
+            <Link
               href="/"
               className="rounded-xl border border-white/20 px-6 py-3 font-semibold hover:bg-white/10 transition"
             >
@@ -180,7 +230,6 @@ export default function QuizPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white px-6 py-10">
       <div className="mx-auto max-w-3xl">
-
         <div className="mb-10">
           <Link
             href="/"
@@ -204,6 +253,7 @@ export default function QuizPage() {
               <p className="text-sm text-slate-400">
                 Câu hỏi
               </p>
+
               <p className="text-xl font-bold">
                 {current + 1}/{questions.length}
               </p>
@@ -239,15 +289,10 @@ export default function QuizPage() {
 
               if (selected !== null) {
                 if (isCorrect) {
-                  style =
-                    "border-green-500 bg-green-500/10";
+                  style = "border-green-500 bg-green-500/10";
                 } else if (isSelected) {
-                  style =
-                    "border-red-500 bg-red-500/10";
+                  style = "border-red-500 bg-red-500/10";
                 }
-              } else if (isSelected) {
-                style =
-                  "border-blue-500 bg-blue-500/10";
               }
 
               return (
@@ -263,17 +308,13 @@ export default function QuizPage() {
                   {option}
 
                   {selected !== null && isCorrect && (
-                    <span className="float-right">
-                      ✓
-                    </span>
+                    <span className="float-right">✓</span>
                   )}
 
                   {selected !== null &&
                     isSelected &&
                     !isCorrect && (
-                      <span className="float-right">
-                        ✕
-                      </span>
+                      <span className="float-right">✕</span>
                     )}
                 </button>
               );
@@ -292,7 +333,7 @@ export default function QuizPage() {
 
           <button
             onClick={nextQuestion}
-            disabled={selected === null}
+            disabled={selected === null || saving}
             className="mt-8 w-full rounded-2xl bg-blue-600 py-4 font-bold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {current === questions.length - 1
@@ -304,4 +345,3 @@ export default function QuizPage() {
     </main>
   );
 }
-

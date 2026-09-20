@@ -1,42 +1,120 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-const achievements = [
-  {
-    icon: "📖",
-    title: "Người khám phá",
-    description: "Hoàn thành bài học đầu tiên",
-    progress: "Đã hoàn thành",
-    unlocked: true,
-  },
-  {
-    icon: "🧠",
-    title: "Nhà sử học trẻ",
-    description: "Hoàn thành Quiz lịch sử",
-    progress: "Đã mở khóa",
-    unlocked: true,
-  },
-  {
-    icon: "🏆",
-    title: "Bậc thầy lịch sử",
-    description: "Đạt 10/10 điểm trong Quiz",
-    progress: "Chưa mở khóa",
-    unlocked: false,
-  },
-  {
-    icon: "⭐",
-    title: "Học tập chăm chỉ",
-    description: "Hoàn thành 5 bài học",
-    progress: "1/5 bài học",
-    unlocked: false,
-  },
-];
+type ProgressData = {
+  completedScenes: number[];
+  quizScore: number;
+  quizCompleted: boolean;
+};
 
 export default function AchievementsPage() {
+  const [progress, setProgress] = useState<ProgressData>({
+    completedScenes: [],
+    quizScore: 0,
+    quizCompleted: false,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProgress() {
+      try {
+        const response = await fetch("/api/progress");
+
+        if (!response.ok) {
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+
+        setProgress({
+          completedScenes: data.completedScenes || [],
+          quizScore: data.quizScore || 0,
+          quizCompleted: data.quizCompleted || false,
+        });
+      } catch (error) {
+        console.error("Không thể tải tiến độ:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProgress();
+  }, []);
+
+  const completedLessons = progress.completedScenes.length;
+
+  const firstAchievement = completedLessons >= 1;
+  const quizAchievement = progress.quizCompleted;
+  const perfectAchievement =
+    progress.quizCompleted && progress.quizScore === 10;
+  const hardworkingAchievement = completedLessons >= 5;
+
+  const unlockedCount = [
+    firstAchievement,
+    quizAchievement,
+    perfectAchievement,
+    hardworkingAchievement,
+  ].filter(Boolean).length;
+
+  const lessonPercent = Math.round(
+    (completedLessons / 10) * 100
+  );
+
+  const achievements = [
+    {
+      icon: "📖",
+      title: "Người khám phá",
+      description: "Hoàn thành bài học đầu tiên",
+      progress: firstAchievement
+        ? "Đã hoàn thành"
+        : `${completedLessons}/1 bài học`,
+      unlocked: firstAchievement,
+    },
+    {
+      icon: "🧠",
+      title: "Nhà sử học trẻ",
+      description: "Hoàn thành Quiz lịch sử",
+      progress: quizAchievement
+        ? `Đã mở khóa • ${progress.quizScore}/10 điểm`
+        : "Chưa mở khóa",
+      unlocked: quizAchievement,
+    },
+    {
+      icon: "🏆",
+      title: "Bậc thầy lịch sử",
+      description: "Đạt 10/10 điểm trong Quiz",
+      progress: perfectAchievement
+        ? "Đã mở khóa"
+        : `${progress.quizScore}/10 điểm`,
+      unlocked: perfectAchievement,
+    },
+    {
+      icon: "⭐",
+      title: "Học tập chăm chỉ",
+      description: "Hoàn thành 5 bài học",
+      progress: hardworkingAchievement
+        ? "Đã mở khóa"
+        : `${completedLessons}/5 bài học`,
+      unlocked: hardworkingAchievement,
+    },
+  ];
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-slate-400">
+          Đang tải thành tích...
+        </p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <div>
@@ -58,7 +136,6 @@ export default function AchievementsPage() {
         </div>
       </header>
 
-      {/* Content */}
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="mb-10">
           <p className="text-sm font-semibold text-amber-400">
@@ -75,7 +152,6 @@ export default function AchievementsPage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid gap-5 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <p className="text-sm text-slate-400">
@@ -83,7 +159,7 @@ export default function AchievementsPage() {
             </p>
 
             <p className="mt-3 text-4xl font-black">
-              1
+              {completedLessons}
             </p>
 
             <p className="mt-2 text-sm text-slate-500">
@@ -97,11 +173,13 @@ export default function AchievementsPage() {
             </p>
 
             <p className="mt-3 text-4xl font-black">
-              1
+              {progress.quizCompleted ? 1 : 0}
             </p>
 
             <p className="mt-2 text-sm text-slate-500">
-              Quiz
+              {progress.quizCompleted
+                ? `Điểm: ${progress.quizScore}/10`
+                : "Chưa hoàn thành"}
             </p>
           </div>
 
@@ -111,7 +189,7 @@ export default function AchievementsPage() {
             </p>
 
             <p className="mt-3 text-4xl font-black">
-              2
+              {unlockedCount}
             </p>
 
             <p className="mt-2 text-sm text-slate-500">
@@ -120,7 +198,6 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        {/* Progress */}
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -129,24 +206,23 @@ export default function AchievementsPage() {
               </h3>
 
               <p className="mt-1 text-sm text-slate-400">
-                Bạn đã hoàn thành 10% hành trình hiện tại.
+                Bạn đã hoàn thành {lessonPercent}% hành trình hiện tại.
               </p>
             </div>
 
             <span className="text-xl font-bold text-amber-400">
-              10%
+              {lessonPercent}%
             </span>
           </div>
 
           <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-amber-400"
-              style={{ width: "10%" }}
+              className="h-full rounded-full bg-amber-400 transition-all"
+              style={{ width: `${lessonPercent}%` }}
             />
           </div>
         </div>
 
-        {/* Achievements */}
         <div className="mt-12">
           <h3 className="text-2xl font-bold">
             🏅 Huy hiệu
@@ -200,7 +276,6 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="mt-12 flex flex-wrap gap-4">
           <Link
             href="/lesson"
@@ -220,4 +295,3 @@ export default function AchievementsPage() {
     </main>
   );
 }
-
